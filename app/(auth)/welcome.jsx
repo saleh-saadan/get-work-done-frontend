@@ -1,7 +1,7 @@
 // app/(auth)/welcome.jsx
-import { View, Text, Image, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -31,12 +31,12 @@ export default function WelcomeScreen() {
 
         {/* Buttons */}
         <View className="pb-10 space-y-4">
-          <TouchableOpacity
-            className="bg-blue-500 py-4 rounded-xl items-center"
-            onPress={() => router.push('/(tabs)/home')}
-          >
-            <Text className="text-white text-lg font-semibold">Sign In</Text>
-          </TouchableOpacity>
+         <TouchableOpacity
+          className="bg-blue-500 py-4 rounded-xl items-center"
+          onPress={() => router.push('/(auth)/signin')} // changed from '/(tabs)/home'
+        >
+          <Text className="text-white text-lg font-semibold">Sign In</Text>
+        </TouchableOpacity>
           
           <TouchableOpacity
             className="border-2 border-blue-500 py-4 rounded-xl items-center"

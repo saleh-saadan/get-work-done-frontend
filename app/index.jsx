@@ -1,20 +1,32 @@
 // app/index.jsx
-import { useEffect } from 'react';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { useEffect } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 export default function Index() {
   const router = useRouter();
 
-  useEffect(() => {
-    // For now, redirect to welcome screen
-    // Later, you can add auth logic here
-    const timer = setTimeout(() => {
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
+      if (token) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(auth)/welcome');
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
+      // Still go to welcome if something fails
       router.replace('/(auth)/welcome');
-    }, 1000);
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, []);
+  // Remove setTimeout for now, just call directly
+  checkAuth();
+}, []);
 
   return (
     <View className="flex-1 items-center justify-center bg-blue-500">

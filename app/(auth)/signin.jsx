@@ -1,11 +1,39 @@
 // app/(auth)/signin.jsx
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { apiRequest, saveTokens } from '../../api.js';
 
 export default function SignInScreen() {
   const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSignIn = async () => {
+    if (!username || !password) {
+      Alert.alert('Error', 'Please enter username and password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const data = await apiRequest('/users/login/', 'POST', {
+        username,
+        password,
+      }, false);
+
+      await saveTokens(data.access, data.refresh);
+      router.replace('/(tabs)');
+    } catch (error) {
+      Alert.alert('Login Failed', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -30,12 +58,13 @@ export default function SignInScreen() {
         <View className="flex-1 px-6 mt-10">
           <View className="space-y-6">
             <View>
-              <Text className="text-gray-700 font-medium mb-2">Email</Text>
+              <Text className="text-gray-700 font-medium mb-2">Username</Text>
               <TextInput
                 className="border border-gray-300 rounded-xl px-4 py-3.5 text-base"
-                placeholder="Enter your email"
-                keyboardType="email-address"
+                placeholder="Enter your username"
                 autoCapitalize="none"
+                value={username}
+                onChangeText={setUsername}
               />
             </View>
 
@@ -45,6 +74,8 @@ export default function SignInScreen() {
                 className="border border-gray-300 rounded-xl px-4 py-3.5 text-base"
                 placeholder="Enter your password"
                 secureTextEntry
+                value={password}
+                onChangeText={setPassword}
               />
             </View>
 
@@ -56,10 +87,15 @@ export default function SignInScreen() {
           {/* Bottom Section */}
           <View className="flex-1 justify-end pb-10">
             <TouchableOpacity
-              className="bg-blue-500 py-4 rounded-xl items-center"
-              onPress={() => router.replace('/(tabs)')}
+              className={`bg-blue-500 py-4 rounded-xl items-center ${loading ? 'opacity-50' : ''}`}
+              onPress={handleSignIn}
+              disabled={loading}
             >
-              <Text className="text-white text-lg font-semibold">Sign In</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white text-lg font-semibold">Sign In</Text>
+              )}
             </TouchableOpacity>
 
             <View className="flex-row justify-center mt-6">
