@@ -1,9 +1,9 @@
-// app/(tabs)/home.jsx
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { CheckCircle, Circle, Clock, Plus, TrendingUp } from 'lucide-react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CheckCircle, Circle, Clock, TrendingUp, Plus } from 'lucide-react-native';
+import { useTheme } from '../../context/ThemeContext';
 
-// Mock data
+// Mock data (same as before)
 const myTasks = [
   { id: 1, title: 'Complete React Native project', completed: true, time: '9:00 AM' },
   { id: 2, title: 'Team meeting with design', completed: false, time: '11:00 AM' },
@@ -19,65 +19,66 @@ const friendsTasks = [
 ];
 
 export default function HomeScreen() {
+  const { theme } = useTheme();
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      <ScrollView className="flex-1">
-        {/* Header */}
-        <View className="px-6 pt-6 pb-4">
-          <View className="flex-row justify-between items-center">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView style={{ flex: 1 }}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
-              <Text className="text-2xl font-bold text-gray-800">Today's Tasks</Text>
-              <Text className="text-gray-500 mt-1">Wednesday, Nov 15</Text>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>Today's Tasks</Text>
+              <Text style={{ color: theme.textSecondary, marginTop: 4 }}>Wednesday, Nov 15</Text>
             </View>
-            <View className="flex-row items-center bg-blue-50 px-3 py-1.5 rounded-full">
-              <TrendingUp size={16} color="#3b82f6" />
-              <Text className="text-blue-600 font-medium ml-1.5">12/15 done</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme.accentLight, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999 }}>
+              <TrendingUp size={16} color={theme.accent} />
+              <Text style={{ color: theme.accent, fontWeight: '500', marginLeft: 6 }}>12/15 done</Text>
             </View>
           </View>
         </View>
 
         {/* Stats */}
-        <View className="px-6 mb-6">
-          <View className="flex-row space-x-4">
-            <View className="flex-1 bg-white rounded-2xl p-4 shadow-sm">
-              <Text className="text-gray-500 text-sm">Tasks Done</Text>
-              <Text className="text-3xl font-bold text-gray-800 mt-2">12</Text>
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            <View style={{ flex: 1, backgroundColor: theme.card, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+              <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Tasks Done</Text>
+              <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.text, marginTop: 8 }}>12</Text>
             </View>
-            <View className="flex-1 bg-white rounded-2xl p-4 shadow-sm">
-              <Text className="text-gray-500 text-sm">Pending</Text>
-              <Text className="text-3xl font-bold text-gray-800 mt-2">3</Text>
+            <View style={{ flex: 1, backgroundColor: theme.card, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+              <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Pending</Text>
+              <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.text, marginTop: 8 }}>3</Text>
             </View>
           </View>
         </View>
 
-        {/* My Tasks Section */}
-        <View className="px-6 mb-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold text-gray-800">My Tasks</Text>
-            <TouchableOpacity className="flex-row items-center">
-              <Plus size={20} color="#3b82f6" />
-              <Text className="text-blue-500 font-medium ml-1">Add Task</Text>
+        {/* My Tasks */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>My Tasks</Text>
+            <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Plus size={20} color={theme.accent} />
+              <Text style={{ color: theme.accent, fontWeight: '500', marginLeft: 4 }}>Add Task</Text>
             </TouchableOpacity>
           </View>
 
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
             {myTasks.map((task) => (
-              <View key={task.id} className="border-b border-gray-100 last:border-b-0">
-                <TouchableOpacity className="flex-row items-center p-4">
-                  <View className="mr-3">
+              <View key={task.id} style={{ borderBottomWidth: 1, borderBottomColor: theme.border, padding: 16 }}>
+                <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ marginRight: 12 }}>
                     {task.completed ? (
-                      <CheckCircle size={24} color="#10b981" />
+                      <CheckCircle size={24} color={theme.success} />
                     ) : (
-                      <Circle size={24} color="#d1d5db" />
+                      <Circle size={24} color={theme.border} />
                     )}
                   </View>
-                  <View className="flex-1">
-                    <Text className={`text-base ${task.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[ { fontSize: 16 }, task.completed ? { color: theme.textSecondary, textDecorationLine: 'line-through' } : { color: theme.text } ]}>
                       {task.title}
                     </Text>
-                    <View className="flex-row items-center mt-1">
-                      <Clock size={14} color="#9ca3af" />
-                      <Text className="text-gray-400 text-sm ml-1">{task.time}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      <Clock size={14} color={theme.textSecondary} />
+                      <Text style={{ color: theme.textSecondary, fontSize: 14, marginLeft: 4 }}>{task.time}</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -86,37 +87,33 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Friends' Tasks Section */}
-        <View className="px-6 mb-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold text-gray-800">Friends' Progress</Text>
-            <Text className="text-gray-500">4 active</Text>
+        {/* Friends' Tasks */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>Friends' Progress</Text>
+            <Text style={{ color: theme.textSecondary }}>4 active</Text>
           </View>
 
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
             {friendsTasks.map((item) => (
-              <View key={item.id} className="border-b border-gray-100 last:border-b-0">
-                <View className="p-4">
-                  <View className="flex-row justify-between items-start mb-2">
-                    <View className="flex-row items-center">
-                      <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center">
-                        <Text className="text-blue-600 font-bold">
-                          {item.friend.charAt(0)}
-                        </Text>
-                      </View>
-                      <Text className="font-medium text-gray-800 ml-3">{item.friend}</Text>
+              <View key={item.id} style={{ borderBottomWidth: 1, borderBottomColor: theme.border, padding: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: 32, height: 32, backgroundColor: theme.accentLight, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: theme.accent, fontWeight: 'bold' }}>{item.friend.charAt(0)}</Text>
                     </View>
-                    <View className={`px-2 py-1 rounded-full ${item.completed ? 'bg-green-50' : 'bg-yellow-50'}`}>
-                      <Text className={`text-xs font-medium ${item.completed ? 'text-green-600' : 'text-yellow-600'}`}>
-                        {item.completed ? 'Done' : 'In Progress'}
-                      </Text>
-                    </View>
+                    <Text style={{ fontWeight: '500', color: theme.text, marginLeft: 12 }}>{item.friend}</Text>
                   </View>
-                  <Text className="text-gray-600 ml-11">{item.task}</Text>
-                  <View className="flex-row items-center mt-2 ml-11">
-                    <Clock size={14} color="#9ca3af" />
-                    <Text className="text-gray-400 text-sm ml-1">{item.time}</Text>
+                  <View style={{ backgroundColor: item.completed ? theme.success + '20' : theme.warning + '20', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '500', color: item.completed ? theme.success : theme.warning }}>
+                      {item.completed ? 'Done' : 'In Progress'}
+                    </Text>
                   </View>
+                </View>
+                <Text style={{ color: theme.textSecondary, marginLeft: 44 }}>{item.task}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, marginLeft: 44 }}>
+                  <Clock size={14} color={theme.textSecondary} />
+                  <Text style={{ color: theme.textSecondary, fontSize: 14, marginLeft: 4 }}>{item.time}</Text>
                 </View>
               </View>
             ))}

@@ -1,15 +1,27 @@
-// app/(tabs)/settings.jsx
-import { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  User, Bell, Moon, Globe, Shield, HelpCircle, 
-  LogOut, ChevronRight, Palette, Download, UserCheck 
+import {
+  Bell,
+  ChevronRight,
+  Download,
+  Globe,
+  HelpCircle,
+  LogOut,
+  Moon,
+  Palette,
+  Shield,
+  Sun,
+  User,
+  UserCheck
 } from 'lucide-react-native';
+import { useState } from 'react';
+import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function SettingsScreen() {
+  const { theme, isDark, toggleTheme } = useTheme();
+  const { user, loading, logout } = useAuth();
   const [settings, setSettings] = useState({
-    darkMode: false,
     notifications: true,
     globalSync: true,
     biometricLogin: false,
@@ -22,155 +34,173 @@ export default function SettingsScreen() {
   };
 
   const menuItems = [
-    { icon: <User size={22} color="#4b5563" />, title: 'Account Settings', description: 'Manage your account details' },
-    { icon: <Bell size={22} color="#4b5563" />, title: 'Notifications', description: 'Customize notification preferences' },
-    { icon: <Palette size={22} color="#4b5563" />, title: 'Appearance', description: 'Theme and display settings' },
-    { icon: <Globe size={22} color="#4b5563" />, title: 'Language & Region', description: 'App language and regional settings' },
-    { icon: <Shield size={22} color="#4b5563" />, title: 'Privacy & Security', description: 'Data and security settings' },
-    { icon: <Download size={22} color="#4b5563" />, title: 'Data & Storage', description: 'Manage storage and backups' },
-    { icon: <UserCheck size={22} color="#4b5563" />, title: 'Accessibility', description: 'Accessibility features' },
-    { icon: <HelpCircle size={22} color="#4b5563" />, title: 'Help & Support', description: 'FAQ and contact support' },
+    { icon: <User size={22} color={theme.textSecondary} />, title: 'Account Settings', description: 'Manage your account details' },
+    { icon: <Bell size={22} color={theme.textSecondary} />, title: 'Notifications', description: 'Customize notification preferences' },
+    { icon: <Palette size={22} color={theme.textSecondary} />, title: 'Appearance', description: 'Theme and display settings' },
+    { icon: <Globe size={22} color={theme.textSecondary} />, title: 'Language & Region', description: 'App language and regional settings' },
+    { icon: <Shield size={22} color={theme.textSecondary} />, title: 'Privacy & Security', description: 'Data and security settings' },
+    { icon: <Download size={22} color={theme.textSecondary} />, title: 'Data & Storage', description: 'Manage storage and backups' },
+    { icon: <UserCheck size={22} color={theme.textSecondary} />, title: 'Accessibility', description: 'Accessibility features' },
+    { icon: <HelpCircle size={22} color={theme.textSecondary} />, title: 'Help & Support', description: 'FAQ and contact support' },
   ];
 
+  const handleLogout = () => {
+    Alert.alert(
+      'Log Out',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log Out', onPress: logout, style: 'destructive' }
+      ]
+    );
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      <ScrollView className="flex-1">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView style={{ flex: 1 }}>
         {/* Header */}
-        <View className="px-6 pt-6 pb-4">
-          <Text className="text-2xl font-bold text-gray-800">Settings</Text>
-          <Text className="text-gray-500 mt-1">Customize your GWD experience</Text>
+        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>Settings</Text>
+          <Text style={{ color: theme.textSecondary, marginTop: 4 }}>Customize your GWD experience</Text>
         </View>
 
         {/* Profile Card */}
-        <View className="px-6 mb-6">
-          <View className="bg-white rounded-2xl p-6 shadow-sm">
-            <View className="flex-row items-center">
-              <View className="w-16 h-16 bg-blue-500 rounded-full items-center justify-center">
-                <Text className="text-white text-2xl font-bold">JD</Text>
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <View style={{ backgroundColor: theme.card, borderRadius: 16, padding: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 64, height: 64, backgroundColor: theme.accent, borderRadius: 32, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: theme.background, fontSize: 24, fontWeight: 'bold' }}>
+                  {user?.username?.charAt(0).toUpperCase() || 'U'}
+                </Text>
               </View>
-              <View className="flex-1 ml-4">
-                <Text className="text-xl font-bold text-gray-800">John Doe</Text>
-                <Text className="text-gray-500">john.doe@example.com</Text>
-                <Text className="text-blue-500 font-medium mt-1">Premium Member</Text>
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>
+                  {user?.first_name || user?.username || 'User'}
+                </Text>
+                <Text style={{ color: theme.textSecondary, marginTop: 2 }}>{user?.email || ''}</Text>
+                <Text style={{ color: theme.accent, fontWeight: '500', marginTop: 4 }}>Friend ID: {user?.friend_id || ''}</Text>
               </View>
             </View>
-            <TouchableOpacity className="mt-6 bg-blue-50 py-3 rounded-xl items-center">
-              <Text className="text-blue-600 font-semibold">Edit Profile</Text>
+            <TouchableOpacity style={{ marginTop: 24, backgroundColor: theme.accentLight, paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}>
+              <Text style={{ color: theme.accent, fontWeight: '600' }}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Quick Settings */}
-        <View className="px-6 mb-6">
-          <Text className="text-lg font-bold text-gray-800 mb-4">Quick Settings</Text>
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {/* Dark Mode */}
-            <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-purple-100 rounded-lg items-center justify-center mr-3">
-                  <Moon size={20} color="#8b5cf6" />
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 16 }}>Quick Settings</Text>
+          <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+            {/* Theme Toggle */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 40, height: 40, backgroundColor: theme.accentLight, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                  {isDark ? <Moon size={20} color={theme.accent} /> : <Sun size={20} color={theme.accent} />}
                 </View>
                 <View>
-                  <Text className="font-medium text-gray-800">Dark Mode</Text>
-                  <Text className="text-gray-500 text-sm">Use dark theme</Text>
+                  <Text style={{ fontWeight: '500', color: theme.text }}>Dark Mode</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Switch theme</Text>
                 </View>
               </View>
               <Switch
-                value={settings.darkMode}
-                onValueChange={() => toggleSetting('darkMode')}
-                trackColor={{ false: '#d1d5db', true: '#8b5cf6' }}
-                thumbColor={settings.darkMode ? '#ffffff' : '#ffffff'}
+                value={isDark}
+                onValueChange={toggleTheme}
+                trackColor={{ false: theme.border, true: theme.accent }}
+                thumbColor={isDark ? theme.background : theme.background}
               />
             </View>
 
-            {/* Global Compatibility */}
-            <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-green-100 rounded-lg items-center justify-center mr-3">
-                  <Globe size={20} color="#10b981" />
+            {/* Global Sync */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 40, height: 40, backgroundColor: theme.accentLight, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                  <Globe size={20} color={theme.accent} />
                 </View>
                 <View>
-                  <Text className="font-medium text-gray-800">Global Sync</Text>
-                  <Text className="text-gray-500 text-sm">Sync across all devices</Text>
+                  <Text style={{ fontWeight: '500', color: theme.text }}>Global Sync</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Sync across all devices</Text>
                 </View>
               </View>
               <Switch
                 value={settings.globalSync}
                 onValueChange={() => toggleSetting('globalSync')}
-                trackColor={{ false: '#d1d5db', true: '#10b981' }}
-                thumbColor={settings.globalSync ? '#ffffff' : '#ffffff'}
+                trackColor={{ false: theme.border, true: theme.accent }}
+                thumbColor={settings.globalSync ? theme.background : theme.background}
               />
             </View>
 
             {/* Notifications */}
-            <View className="flex-row items-center justify-between p-4">
-              <View className="flex-row items-center">
-                <View className="w-10 h-10 bg-blue-100 rounded-lg items-center justify-center mr-3">
-                  <Bell size={20} color="#3b82f6" />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 40, height: 40, backgroundColor: theme.accentLight, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                  <Bell size={20} color={theme.accent} />
                 </View>
                 <View>
-                  <Text className="font-medium text-gray-800">Notifications</Text>
-                  <Text className="text-gray-500 text-sm">Task reminders and updates</Text>
+                  <Text style={{ fontWeight: '500', color: theme.text }}>Notifications</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Task reminders and updates</Text>
                 </View>
               </View>
               <Switch
                 value={settings.notifications}
                 onValueChange={() => toggleSetting('notifications')}
-                trackColor={{ false: '#d1d5db', true: '#3b82f6' }}
-                thumbColor={settings.notifications ? '#ffffff' : '#ffffff'}
+                trackColor={{ false: theme.border, true: theme.accent }}
+                thumbColor={settings.notifications ? theme.background : theme.background}
               />
             </View>
           </View>
         </View>
 
         {/* Settings Menu */}
-        <View className="px-6 mb-6">
-          <Text className="text-lg font-bold text-gray-800 mb-4">More Settings</Text>
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 16 }}>More Settings</Text>
+          <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
             {menuItems.map((item, index) => (
               <TouchableOpacity 
                 key={index}
-                className="flex-row items-center justify-between p-4 border-b border-gray-100 last:border-b-0"
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: index < menuItems.length - 1 ? 1 : 0, borderBottomColor: theme.border }}
               >
-                <View className="flex-row items-center flex-1">
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                   {item.icon}
-                  <View className="ml-3 flex-1">
-                    <Text className="font-medium text-gray-800">{item.title}</Text>
-                    <Text className="text-gray-500 text-sm mt-0.5">{item.description}</Text>
+                  <View style={{ marginLeft: 12, flex: 1 }}>
+                    <Text style={{ fontWeight: '500', color: theme.text }}>{item.title}</Text>
+                    <Text style={{ color: theme.textSecondary, fontSize: 14, marginTop: 2 }}>{item.description}</Text>
                   </View>
                 </View>
-                <ChevronRight size={18} color="#9ca3af" />
+                <ChevronRight size={18} color={theme.textSecondary} />
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
         {/* App Info */}
-        <View className="px-6 mb-6">
-          <View className="bg-white rounded-2xl p-6 shadow-sm items-center">
-            <Text className="text-4xl font-bold text-gray-800 mb-2">GWD</Text>
-            <Text className="text-gray-500 mb-1">Get Work Done</Text>
-            <Text className="text-gray-400 text-sm mb-6">Version 2.1.4</Text>
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <View style={{ backgroundColor: theme.card, borderRadius: 16, padding: 24, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+            <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>GWD</Text>
+            <Text style={{ color: theme.textSecondary, marginBottom: 4 }}>Get Work Done</Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 14, marginBottom: 24 }}>Version 2.1.4</Text>
             
-            <View className="flex-row space-x-6">
-              <TouchableOpacity className="items-center">
-                <Text className="text-blue-500 font-medium">Privacy Policy</Text>
+            <View style={{ flexDirection: 'row', gap: 24 }}>
+              <TouchableOpacity>
+                <Text style={{ color: theme.accent, fontWeight: '500' }}>Privacy Policy</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="items-center">
-                <Text className="text-blue-500 font-medium">Terms of Service</Text>
+              <TouchableOpacity>
+                <Text style={{ color: theme.accent, fontWeight: '500' }}>Terms</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="items-center">
-                <Text className="text-blue-500 font-medium">Website</Text>
+              <TouchableOpacity>
+                <Text style={{ color: theme.accent, fontWeight: '500' }}>Website</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
         {/* Logout Button */}
-        <View className="px-6 pb-10">
-          <TouchableOpacity className="flex-row items-center justify-center bg-red-50 py-4 rounded-2xl">
-            <LogOut size={20} color="#ef4444" />
-            <Text className="text-red-600 font-semibold ml-2">Log Out</Text>
+        <View style={{ paddingHorizontal: 24, paddingBottom: 40 }}>
+          <TouchableOpacity 
+            onPress={handleLogout}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: theme.error + '20', paddingVertical: 16, borderRadius: 16 }}
+          >
+            <LogOut size={20} color={theme.error} />
+            <Text style={{ color: theme.error, fontWeight: '600', marginLeft: 8 }}>Log Out</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

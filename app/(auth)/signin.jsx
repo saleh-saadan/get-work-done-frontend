@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiRequest, saveTokens } from '../../api.js';
+import { apiRequest, fetchCurrentUser, saveTokens } from '../../api.js';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -27,7 +27,11 @@ export default function SignInScreen() {
       }, false);
 
       await saveTokens(data.access, data.refresh);
-      router.replace('/(tabs)');
+
+      const user = await fetchCurrentUser();
+
+      router.replace('/(tabs)/home');
+
     } catch (error) {
       Alert.alert('Login Failed', error.message);
     } finally {

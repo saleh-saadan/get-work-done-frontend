@@ -1,197 +1,233 @@
-// app/(tabs)/social.jsx
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { Check, MessageCircle, TrendingUp, Trophy, UserPlus, Users, X } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Users, Trophy, TrendingUp, UserPlus, MessageCircle, Heart } from 'lucide-react-native';
-
-// Mock data
-const friends = [
-  { id: 1, name: 'Alex Johnson', score: 2450, tasksCompleted: 89, avatar: 'AJ' },
-  { id: 2, name: 'Sarah Miller', score: 1980, tasksCompleted: 76, avatar: 'SM' },
-  { id: 3, name: 'Mike Chen', score: 1870, tasksCompleted: 72, avatar: 'MC' },
-  { id: 4, name: 'Emma Davis', score: 1760, tasksCompleted: 68, avatar: 'ED' },
-  { id: 5, name: 'Ryan Wilson', score: 1620, tasksCompleted: 63, avatar: 'RW' },
-];
-
-const challenges = [
-  { id: 1, title: '7-Day Streak Challenge', participants: 24, progress: 5, total: 7 },
-  { id: 2, title: 'Weekend Productivity', participants: 18, progress: 1, total: 2 },
-  { id: 3, title: 'Morning Routine', participants: 32, progress: 3, total: 5 },
-];
+import { apiRequest } from '../../api';
+import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function SocialScreen() {
+  const { theme } = useTheme();
+  const { user } = useAuth();
+  const [friends, setFriends] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [friendIdInput, setFriendIdInput] = useState('');
+
+  // Fetch friends and pending requests
+  const loadData = async () => {
+    try {
+      const friendsData = await apiRequest('/users/friends/lists/', 'GET', null, true);
+      setFriends(friendsData);
+
+      const pendingData = await apiRequest('/users/friends/pending/', 'GET', null, true);
+      setPendingRequests(pendingData);
+    } catch (error) {
+      console.error('Failed to load social data', error);
+      Alert.alert('Error', 'Could not load friends data');
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
+
+  // Send friend request
+  const sendFriendRequest = async () => {
+    if (!friendIdInput.trim()) {
+      Alert.alert('Error', 'Please enter a friend ID');
+      return;
+    }
+    try {
+      await apiRequest('/users/friends/request/', 'POST', { friend_id: friendIdInput }, true);
+      Alert.alert('Success', 'Friend request sent!');
+      setFriendIdInput('');
+      setModalVisible(false);
+      // Optionally refresh pending? Not needed because this is sent, not received.
+    } catch (error) {
+      Alert.alert('Failed', error.message);
+    }
+  };
+
+  // Accept friend request
+  const acceptRequest = async (friendshipId) => {
+    try {
+      await apiRequest('/users/friends/add/', 'POST', { friend_id: friendshipId }, true);
+      Alert.alert('Success', 'Friend added!');
+      loadData(); // refresh lists
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  // Reject friend request
+  const rejectRequest = async (friendshipId) => {
+    try {
+      await apiRequest('/users/friends/reject/', 'POST', { friend_id: friendshipId }, true);
+      Alert.alert('Success', 'Request rejected');
+      loadData();
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  // Calculate stats
+  const friendCount = friends.length;
+  // Mock rank and efficiency for now (could be computed from backend later)
+  const rank = friendCount > 5 ? '3rd' : '1st';
+  const efficiency = '78%';
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      <ScrollView className="flex-1">
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView 
+        style={{ flex: 1 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />
+        }
+      >
         {/* Header */}
-        <View className="px-6 pt-6 pb-4">
-          <View className="flex-row justify-between items-center mb-6">
+        <View style={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <View>
-              <Text className="text-2xl font-bold text-gray-800">Social</Text>
-              <Text className="text-gray-500 mt-1">Connect and compete with friends</Text>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>Social</Text>
+              <Text style={{ color: theme.textSecondary, marginTop: 4 }}>Connect and compete with friends</Text>
             </View>
-            <TouchableOpacity className="flex-row items-center bg-blue-500 px-4 py-2 rounded-full">
-              <UserPlus size={18} color="white" />
-              <Text className="text-white font-medium ml-2">Add Friend</Text>
+            <TouchableOpacity 
+              onPress={() => setModalVisible(true)}
+              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999 }}
+            >
+              <UserPlus size={18} color={theme.background} />
+              <Text style={{ color: theme.background, fontWeight: '600', marginLeft: 8 }}>Add Friend</Text>
             </TouchableOpacity>
           </View>
 
           {/* Stats */}
-          <View className="flex-row justify-between mb-6">
-            <View className="items-center">
-              <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mb-2">
-                <Users size={24} color="#3b82f6" />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 }}>
+            <View style={{ alignItems: 'center' }}>
+              <View style={{ width: 56, height: 56, backgroundColor: theme.accentLight, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <Users size={24} color={theme.accent} />
               </View>
-              <Text className="text-2xl font-bold text-gray-800">12</Text>
-              <Text className="text-gray-500">Friends</Text>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>{friendCount}</Text>
+              <Text style={{ color: theme.textSecondary }}>Friends</Text>
             </View>
-            <View className="items-center">
-              <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center mb-2">
-                <Trophy size={24} color="#10b981" />
+            <View style={{ alignItems: 'center' }}>
+              <View style={{ width: 56, height: 56, backgroundColor: theme.accentLight, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <Trophy size={24} color={theme.accent} />
               </View>
-              <Text className="text-2xl font-bold text-gray-800">3rd</Text>
-              <Text className="text-gray-500">Rank</Text>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>{rank}</Text>
+              <Text style={{ color: theme.textSecondary }}>Rank</Text>
             </View>
-            <View className="items-center">
-              <View className="w-16 h-16 bg-purple-100 rounded-full items-center justify-center mb-2">
-                <TrendingUp size={24} color="#8b5cf6" />
+            <View style={{ alignItems: 'center' }}>
+              <View style={{ width: 56, height: 56, backgroundColor: theme.accentLight, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <TrendingUp size={24} color={theme.accent} />
               </View>
-              <Text className="text-2xl font-bold text-gray-800">89%</Text>
-              <Text className="text-gray-500">Efficiency</Text>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>{efficiency}</Text>
+              <Text style={{ color: theme.textSecondary }}>Efficiency</Text>
             </View>
           </View>
         </View>
 
-        {/* Leaderboard */}
-        <View className="px-6 mb-6">
-          <Text className="text-xl font-bold text-gray-800 mb-4">Leaderboard</Text>
-          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {friends.map((friend, index) => (
-              <View key={friend.id} className="border-b border-gray-100 last:border-b-0">
-                <View className="flex-row items-center p-4">
-                  <View className="w-10 items-center">
-                    <View className={`w-8 h-8 rounded-full items-center justify-center ${
-                      index === 0 ? 'bg-yellow-100' : 
-                      index === 1 ? 'bg-gray-100' : 
-                      index === 2 ? 'bg-orange-100' : 'bg-blue-50'
-                    }`}>
-                      <Text className={`font-bold ${
-                        index === 0 ? 'text-yellow-600' : 
-                        index === 1 ? 'text-gray-600' : 
-                        index === 2 ? 'text-orange-600' : 'text-blue-600'
-                      }`}>
-                        {index + 1}
-                      </Text>
+        {/* Pending Requests Section */}
+        {pendingRequests.length > 0 && (
+          <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 12 }}>Pending Requests</Text>
+            <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+              {pendingRequests.map((req) => (
+                <View key={req.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <View style={{ width: 40, height: 40, backgroundColor: theme.accentLight, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: theme.accent, fontWeight: 'bold' }}>{req.friend_info.username.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={{ marginLeft: 12 }}>
+                      <Text style={{ fontWeight: '500', color: theme.text }}>{req.friend_info.username}</Text>
+                      <Text style={{ color: theme.textSecondary, fontSize: 12 }}>wants to connect</Text>
                     </View>
                   </View>
-                  <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center ml-2">
-                    <Text className="text-blue-600 font-bold">{friend.avatar}</Text>
-                  </View>
-                  <View className="flex-1 ml-4">
-                    <Text className="font-medium text-gray-800">{friend.name}</Text>
-                    <Text className="text-gray-500 text-sm">{friend.tasksCompleted} tasks completed</Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className="font-bold text-gray-800">{friend.score}</Text>
-                    <Text className="text-gray-500 text-sm">points</Text>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity 
+                      onPress={() => acceptRequest(req.id)}
+                      style={{ width: 36, height: 36, backgroundColor: theme.success + '20', borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Check size={18} color={theme.success} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={() => rejectRequest(req.id)}
+                      style={{ width: 36, height: 36, backgroundColor: theme.error + '20', borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={18} color={theme.error} />
+                    </TouchableOpacity>
                   </View>
                 </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
+        )}
+
+        {/* Friends List */}
+        <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 12 }}>Friends</Text>
+          {friends.length === 0 ? (
+            <View style={{ backgroundColor: theme.card, borderRadius: 16, padding: 24, alignItems: 'center' }}>
+              <Text style={{ color: theme.textSecondary, textAlign: 'center' }}>No friends yet. Add some using the button above!</Text>
+            </View>
+          ) : (
+            <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+              {friends.map((friend) => (
+                <View key={friend.id} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+                  <View style={{ width: 48, height: 48, backgroundColor: theme.accentLight, borderRadius: 24, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ color: theme.accent, fontSize: 18, fontWeight: 'bold' }}>{friend.friend_info.username.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 16 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>{friend.friend_info.username}</Text>
+                    <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Active now</Text>
+                  </View>
+                  <TouchableOpacity style={{ padding: 8 }}>
+                    <MessageCircle size={20} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
-        {/* Active Challenges */}
-        <View className="px-6 mb-6">
-          <View className="flex-row justify-between items-center mb-4">
-            <Text className="text-xl font-bold text-gray-800">Active Challenges</Text>
-            <Text className="text-blue-500 font-medium">View All</Text>
-          </View>
-
-          <View className="space-y-4">
-            {challenges.map((challenge) => (
-              <TouchableOpacity key={challenge.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                <View className="flex-row justify-between items-start mb-3">
-                  <Text className="font-medium text-gray-800 flex-1 mr-4">{challenge.title}</Text>
-                  <View className="flex-row items-center">
-                    <Users size={16} color="#6b7280" />
-                    <Text className="text-gray-500 text-sm ml-1">{challenge.participants}</Text>
-                  </View>
-                </View>
-                
-                <View className="mb-3">
-                  <View className="flex-row justify-between mb-1">
-                    <Text className="text-gray-500 text-sm">Progress</Text>
-                    <Text className="text-gray-700 text-sm font-medium">
-                      {challenge.progress}/{challenge.total} days
-                    </Text>
-                  </View>
-                  <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <View 
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${(challenge.progress / challenge.total) * 100}%` }}
-                    />
-                  </View>
-                </View>
-
-                <View className="flex-row justify-between">
-                  <TouchableOpacity className="flex-row items-center">
-                    <Heart size={18} color="#ef4444" />
-                    <Text className="text-gray-600 ml-1.5">Like</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity className="flex-row items-center">
-                    <MessageCircle size={18} color="#6b7280" />
-                    <Text className="text-gray-600 ml-1.5">Discuss</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity className="bg-blue-500 px-4 py-1.5 rounded-full">
-                    <Text className="text-white font-medium text-sm">Join</Text>
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Recent Activity */}
-        <View className="px-6 mb-10">
-          <Text className="text-xl font-bold text-gray-800 mb-4">Recent Activity</Text>
-          <View className="bg-white rounded-2xl shadow-sm p-4">
-            <View className="flex-row items-start mb-4">
-              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center">
-                <Text className="text-green-600 font-bold">AJ</Text>
-              </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-gray-800">
-                  <Text className="font-semibold">Alex Johnson</Text> completed "Mobile App Design"
-                </Text>
-                <Text className="text-gray-400 text-sm mt-1">2 hours ago</Text>
-              </View>
-            </View>
-            
-            <View className="flex-row items-start mb-4">
-              <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center">
-                <Text className="text-purple-600 font-bold">SM</Text>
-              </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-gray-800">
-                  <Text className="font-semibold">Sarah Miller</Text> started a new challenge
-                </Text>
-                <Text className="text-gray-400 text-sm mt-1">4 hours ago</Text>
-              </View>
-            </View>
-            
-            <View className="flex-row items-start">
-              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center">
-                <Text className="text-blue-600 font-bold">MC</Text>
-              </View>
-              <View className="flex-1 ml-3">
-                <Text className="text-gray-800">
-                  <Text className="font-semibold">Mike Chen</Text> reached 50-day streak! 🎉
-                </Text>
-                <Text className="text-gray-400 text-sm mt-1">1 day ago</Text>
+        {/* Add Friend Modal */}
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View style={{ width: '80%', backgroundColor: theme.card, borderRadius: 16, padding: 24 }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text, marginBottom: 16 }}>Add Friend</Text>
+              <Text style={{ color: theme.textSecondary, marginBottom: 8 }}>Enter their 5-character friend ID:</Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: theme.border, borderRadius: 8, padding: 12, color: theme.text, marginBottom: 16 }}
+                placeholder="e.g., A1B2C"
+                placeholderTextColor={theme.textSecondary}
+                value={friendIdInput}
+                onChangeText={setFriendIdInput}
+                autoCapitalize="characters"
+                maxLength={5}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                <TouchableOpacity onPress={() => setModalVisible(false)} style={{ paddingVertical: 10, paddingHorizontal: 16 }}>
+                  <Text style={{ color: theme.textSecondary }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={sendFriendRequest} style={{ backgroundColor: theme.accent, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 }}>
+                  <Text style={{ color: theme.background, fontWeight: '600' }}>Send</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
-        </View>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );

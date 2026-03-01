@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { apiRequest, saveTokens } from '../../api';
+import { apiRequest, fetchCurrentUser, saveTokens } from '../../api';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -42,8 +42,8 @@ export default function SignUpScreen() {
         email: form.email,
         password: form.password,
         password2: form.password2,
-        // first_name: form.first_name,
-        // last_name: form.last_name,
+        first_name: form.first_name,
+        last_name: form.last_name,
       }, false); // no auth needed
     console.log('Register success:', registerData); // add this
       // After registration, log in to get tokens
@@ -54,7 +54,7 @@ export default function SignUpScreen() {
 
       // Save tokens
       await saveTokens(loginData.access, loginData.refresh);
-
+const user = await fetchCurrentUser();
       // Navigate to main app
       router.replace('/(tabs)');
    } catch (error) {

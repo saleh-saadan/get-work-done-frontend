@@ -1,23 +1,24 @@
-// app/(tabs)/_layout.jsx
 import { Tabs } from 'expo-router';
 import { Text, View } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function TabLayout() {
+  const { theme } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#3b82f6',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarActiveTintColor: theme.tabBarActive,
+        tabBarInactiveTintColor: theme.tabBarInactive,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: theme.tabBar,
           borderTopWidth: 1,
-          borderTopColor: '#e5e7eb',
+          borderTopColor: theme.border,
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
         },
-        // ADD THIS TO REMOVE HEADER FROM ALL TABS:
-        headerShown: false, // This removes the header/title bar
+        headerShown: false,
       }}
     >
       <Tabs.Screen
