@@ -3,7 +3,17 @@
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest, fetchCurrentUser, saveTokens } from '../../api';
 
@@ -20,11 +30,10 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (field, value) => {
-    setForm({ ...form, [field]: value });
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSignUp = async () => {
-    // Basic validation
     if (!form.username || !form.email || !form.password || !form.password2) {
       Alert.alert('Error', 'Please fill all required fields');
       return;
@@ -33,60 +42,76 @@ export default function SignUpScreen() {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-    console.log('Form data:', form); // add this
+
     setLoading(true);
     try {
-      // Register user
-      const registerData = await apiRequest('/users/register/', 'POST', {
-        username: form.username,
-        email: form.email,
-        password: form.password,
-        password2: form.password2,
-        first_name: form.first_name,
-        last_name: form.last_name,
-      }, false); // no auth needed
-    console.log('Register success:', registerData); // add this
-      // After registration, log in to get tokens
-      const loginData = await apiRequest('/users/login/', 'POST', {
-        username: form.username,
-        password: form.password,
-      }, false);
+      // Step 1: Register user
+      await apiRequest(
+        '/users/register/',
+        'POST',
+        {
+          username: form.username,
+          email: form.email,
+          password: form.password,
+          password2: form.password2,
+          first_name: form.first_name,
+          last_name: form.last_name,
+        },
+        false
+      );
 
-      // Save tokens
+      // Step 2: Log in to get tokens
+      const loginData = await apiRequest(
+        '/users/login/',
+        'POST',
+        {
+          username: form.username,
+          password: form.password,
+        },
+        false
+      );
+
+      // Step 3: Save tokens BEFORE calling fetchCurrentUser
       await saveTokens(loginData.access, loginData.refresh);
-const user = await fetchCurrentUser();
-      // Navigate to main app
+
+      // Step 4: Fetch and cache current user
+      await fetchCurrentUser();
+
+      // Step 5: Navigate to main app
       router.replace('/(tabs)');
-   } catch (error) {
-  console.error('Signup error:', error);
-  Alert.alert('Registration Failed', error.message);
-} finally {
+    } catch (error) {
+      console.error('Signup error:', error);
+      Alert.alert('Registration Failed', error.message || 'Something went wrong');
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         {/* Header */}
         <View className="px-6 pt-4">
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.back()}
             className="w-10 h-10 items-center justify-center"
           >
             <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
-          
           <Text className="text-3xl font-bold text-gray-800 mt-6">Create Account</Text>
           <Text className="text-gray-500 mt-2">Join GWD and boost your productivity</Text>
         </View>
 
-        {/* Form */}
-        <View className="flex-1 px-6 mt-10">
-          <View className="space-y-6">
+        {/* Scrollable Form */}
+        <ScrollView
+          className="flex-1 px-6 mt-6"
+          contentContainerStyle={{ paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View className="space-y-5">
             <View>
               <Text className="text-gray-700 font-medium mb-2">Username *</Text>
               <TextInput
@@ -153,28 +178,26 @@ const user = await fetchCurrentUser();
             </View>
           </View>
 
-          {/* Bottom Section */}
-          <View className="flex-1 justify-end pb-10">
-            <TouchableOpacity
-              className={`bg-blue-500 py-4 rounded-xl items-center ${loading ? 'opacity-50' : ''}`}
-              onPress={handleSignUp}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text className="text-white text-lg font-semibold">Create Account</Text>
-              )}
-            </TouchableOpacity>
+          {/* Submit */}
+          <TouchableOpacity
+            className={`bg-blue-500 py-4 rounded-xl items-center mt-8 ${loading ? 'opacity-50' : ''}`}
+            onPress={handleSignUp}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white text-lg font-semibold">Create Account</Text>
+            )}
+          </TouchableOpacity>
 
-            <View className="flex-row justify-center mt-6">
-              <Text className="text-gray-500">Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
-                <Text className="text-blue-500 font-medium">Sign In</Text>
-              </TouchableOpacity>
-            </View>
+          <View className="flex-row justify-center mt-6">
+            <Text className="text-gray-500">Already have an account? </Text>
+            <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
+              <Text className="text-blue-500 font-medium">Sign In</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

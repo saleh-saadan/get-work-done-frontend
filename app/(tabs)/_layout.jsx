@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Text, View } from 'react-native';
+import { Home, Settings, User, Users } from 'lucide-react-native';
+import { View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function TabLayout() {
@@ -27,7 +28,7 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color, fontSize: size * 0.7 }}>🏠</Text>
+              <Home color={color} size={size} />
             </View>
           ),
         }}
@@ -38,7 +39,7 @@ export default function TabLayout() {
           title: 'Personal',
           tabBarIcon: ({ color, size }) => (
             <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color, fontSize: size * 0.7 }}>👤</Text>
+              <User color={color} size={size} />
             </View>
           ),
         }}
@@ -49,7 +50,7 @@ export default function TabLayout() {
           title: 'Social',
           tabBarIcon: ({ color, size }) => (
             <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color, fontSize: size * 0.7 }}>👥</Text>
+              <Users color={color} size={size} />
             </View>
           ),
         }}
@@ -60,7 +61,7 @@ export default function TabLayout() {
           title: 'Settings',
           tabBarIcon: ({ color, size }) => (
             <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color, fontSize: size * 0.7 }}>⚙️</Text>
+              <Settings color={color} size={size} />
             </View>
           ),
         }}

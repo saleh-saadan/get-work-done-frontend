@@ -3,7 +3,16 @@
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { apiRequest, fetchCurrentUser, saveTokens } from '../../api.js';
 
@@ -21,19 +30,26 @@ export default function SignInScreen() {
 
     setLoading(true);
     try {
-      const data = await apiRequest('/users/login/', 'POST', {
-        username,
-        password,
-      }, false);
+      // Step 1: Get tokens
+      const data = await apiRequest(
+        '/users/login/',
+        'POST',
+        { username, password },
+        false
+      );
 
+      // Step 2: Save tokens BEFORE fetching user
       await saveTokens(data.access, data.refresh);
 
-      const user = await fetchCurrentUser();
+      // Step 3: Fetch and cache current user
+      await fetchCurrentUser();
 
-      router.replace('/(tabs)/home');
-
+      // Step 4: Navigate — use '/(tabs)' not '/(tabs)/home'
+      // Change this to match whatever your actual tabs index screen is
+      router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Login Failed', error.message);
+      console.error('Signin error:', error);
+      Alert.alert('Login Failed', error.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -41,19 +57,18 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         {/* Header */}
         <View className="px-6 pt-4">
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.back()}
             className="w-10 h-10 items-center justify-center"
           >
             <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
-          
           <Text className="text-3xl font-bold text-gray-800 mt-6">Welcome Back</Text>
           <Text className="text-gray-500 mt-2">Sign in to continue to GWD</Text>
         </View>

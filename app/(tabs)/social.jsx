@@ -1,4 +1,4 @@
-import { Check, MessageCircle, TrendingUp, Trophy, UserPlus, Users, X } from 'lucide-react-native';
+import { Check, Clock, MessageCircle, Trophy, UserPlus, Users, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Alert, Modal, RefreshControl, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,8 @@ export default function SocialScreen() {
   const { theme } = useTheme();
   const { user } = useAuth();
   const [friends, setFriends] = useState([]);
-  const [pendingRequests, setPendingRequests] = useState([]);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [outgoingRequests, setOutgoingRequests] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [friendIdInput, setFriendIdInput] = useState('');
@@ -21,8 +22,11 @@ export default function SocialScreen() {
       const friendsData = await apiRequest('/users/friends/lists/', 'GET', null, true);
       setFriends(friendsData);
 
-      const pendingData = await apiRequest('/users/friends/pending/', 'GET', null, true);
-      setPendingRequests(pendingData);
+      const incomingData = await apiRequest('/users/friends/pending/', 'GET', null, true);
+      setIncomingRequests(incomingData);
+
+      const outgoingData = await apiRequest('/users/friends/pending/sent/', 'GET', null, true);
+      setOutgoingRequests(outgoingData);
     } catch (error) {
       console.error('Failed to load social data', error);
       Alert.alert('Error', 'Could not load friends data');
@@ -46,11 +50,11 @@ export default function SocialScreen() {
       return;
     }
     try {
-      await apiRequest('/users/friends/request/', 'POST', { friend_id: friendIdInput }, true);
+      await apiRequest('/users/friends/request/', 'POST', { user_id: friendIdInput }, true);
       Alert.alert('Success', 'Friend request sent!');
       setFriendIdInput('');
       setModalVisible(false);
-      // Optionally refresh pending? Not needed because this is sent, not received.
+      loadData(); // refresh to show new outgoing request
     } catch (error) {
       Alert.alert('Failed', error.message);
     }
@@ -59,9 +63,9 @@ export default function SocialScreen() {
   // Accept friend request
   const acceptRequest = async (friendshipId) => {
     try {
-      await apiRequest('/users/friends/add/', 'POST', { friend_id: friendshipId }, true);
+      await apiRequest('/users/friends/add/', 'POST', { user_id: friendshipId }, true);
       Alert.alert('Success', 'Friend added!');
-      loadData(); // refresh lists
+      loadData();
     } catch (error) {
       Alert.alert('Error', error.message);
     }
@@ -70,7 +74,7 @@ export default function SocialScreen() {
   // Reject friend request
   const rejectRequest = async (friendshipId) => {
     try {
-      await apiRequest('/users/friends/reject/', 'POST', { friend_id: friendshipId }, true);
+      await apiRequest('/users/friends/reject/', 'POST', { user_id: friendshipId }, true);
       Alert.alert('Success', 'Request rejected');
       loadData();
     } catch (error) {
@@ -78,11 +82,13 @@ export default function SocialScreen() {
     }
   };
 
-  // Calculate stats
+  // Cancel outgoing request (optional: you may need a new backend endpoint to delete a sent request)
+  // For now, we'll just display them without cancel action.
+
+  // Stats
   const friendCount = friends.length;
-  // Mock rank and efficiency for now (could be computed from backend later)
-  const rank = friendCount > 5 ? '3rd' : '1st';
-  const efficiency = '78%';
+  const pendingCount = incomingRequests.length + outgoingRequests.length;
+  const rank = friendCount > 5 ? '3rd' : '1st'; // placeholder
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
@@ -108,7 +114,7 @@ export default function SocialScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Stats */}
+          {/* Stats - Now only two stats, but we keep three for balance; third is pending count */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 16 }}>
             <View style={{ alignItems: 'center' }}>
               <View style={{ width: 56, height: 56, backgroundColor: theme.accentLight, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
@@ -126,20 +132,20 @@ export default function SocialScreen() {
             </View>
             <View style={{ alignItems: 'center' }}>
               <View style={{ width: 56, height: 56, backgroundColor: theme.accentLight, borderRadius: 28, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                <TrendingUp size={24} color={theme.accent} />
+                <Clock size={24} color={theme.accent} />
               </View>
-              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>{efficiency}</Text>
-              <Text style={{ color: theme.textSecondary }}>Efficiency</Text>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>{pendingCount}</Text>
+              <Text style={{ color: theme.textSecondary }}>Pending</Text>
             </View>
           </View>
         </View>
 
-        {/* Pending Requests Section */}
-        {pendingRequests.length > 0 && (
+        {/* Incoming Requests */}
+        {incomingRequests.length > 0 && (
           <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 12 }}>Pending Requests</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 12 }}>Incoming Requests</Text>
             <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
-              {pendingRequests.map((req) => (
+              {incomingRequests.map((req) => (
                 <View key={req.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                     <View style={{ width: 40, height: 40, backgroundColor: theme.accentLight, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
@@ -170,6 +176,30 @@ export default function SocialScreen() {
           </View>
         )}
 
+        {/* Outgoing Requests */}
+        {outgoingRequests.length > 0 && (
+          <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 12 }}>Sent Requests</Text>
+            <View style={{ backgroundColor: theme.card, borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 2 }}>
+              {outgoingRequests.map((req) => (
+                <View key={req.id} style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: theme.border }}>
+                  <View style={{ width: 40, height: 40, backgroundColor: theme.accentLight, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ color: theme.accent, fontWeight: 'bold' }}>{req.friend_info.username.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={{ fontWeight: '500', color: theme.text }}>{req.friend_info.username}</Text>
+                    <Text style={{ color: theme.textSecondary, fontSize: 12 }}>Request sent</Text>
+                  </View>
+                  <View style={{ flex: 1 }} />
+                  <View style={{ backgroundColor: theme.warning + '20', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                    <Text style={{ color: theme.warning, fontSize: 12, fontWeight: '500' }}>Pending</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Friends List */}
         <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 12 }}>Friends</Text>
@@ -186,7 +216,7 @@ export default function SocialScreen() {
                   </View>
                   <View style={{ flex: 1, marginLeft: 16 }}>
                     <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>{friend.friend_info.username}</Text>
-                    <Text style={{ color: theme.textSecondary, fontSize: 14 }}>Active now</Text>
+                    {/* Removed "Active now" – you can replace with something else if desired */}
                   </View>
                   <TouchableOpacity style={{ padding: 8 }}>
                     <MessageCircle size={20} color={theme.textSecondary} />
@@ -197,7 +227,7 @@ export default function SocialScreen() {
           )}
         </View>
 
-        {/* Add Friend Modal */}
+        {/* Add Friend Modal (unchanged) */}
         <Modal
           visible={modalVisible}
           transparent

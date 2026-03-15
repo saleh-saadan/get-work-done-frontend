@@ -78,7 +78,7 @@ export default function SettingsScreen() {
                   {user?.first_name || user?.username || 'User'}
                 </Text>
                 <Text style={{ color: theme.textSecondary, marginTop: 2 }}>{user?.email || ''}</Text>
-                <Text style={{ color: theme.accent, fontWeight: '500', marginTop: 4 }}>Friend ID: {user?.friend_id || ''}</Text>
+                <Text style={{ color: theme.accent, fontWeight: '500', marginTop: 4 }}>Friend ID: {user?.user_id || ''}</Text>
               </View>
             </View>
             <TouchableOpacity style={{ marginTop: 24, backgroundColor: theme.accentLight, paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}>
